@@ -19,8 +19,11 @@
 
 标准一点的做法是你会新建一张或几张专门用来标记的表。其中标记分类的表大概会是这个样子，movie_id，genre。这是一张多对多的关系表，先从这张表里按分类搜，然后把搜出来的 movie_id 集合放到原始的 movie 表里去
 
+```sql
 SELECT FROM `movie` WHERE `id` IN (
     SELECT `movie_id` FROM `xref` WHERE `genre` IN ('a'，'b'));
+```
+
 很快这个搜索就会遇到性能问题，这个子查询里返回的 id 集合实在是太大了。
 
 至此，本文的核心问题终于出现了：当数据不在一张表里的时候，应该怎样做搜索？
@@ -43,6 +46,7 @@ SELECT FROM `movie` WHERE `id` IN (
 
 说了这么多，只为了表明一个观点，上游的数据源是异质的，实际的搜索算法并不是把用户输入的搜索条件复制的、均匀的发送给上游，算法并不中立了。
 
+```sql
 SELECT FROM
 (
     FROM `database`.`table` SELECT WHERE `c1` = 'C1' LIMIT 10
@@ -51,6 +55,8 @@ SELECT FROM
     UNION
     FROM `http://douban.com/api/top` SELECT WHERE `j1` = 'J1' LIMIT 1000)
 WHERE `c1`, `k1`, `j1`;
+```
+
 显然当上游的数据源异质到这种程度，不可能是用普通的命令式编程，从上往下依次读取各个源的，也许这里应该开个多线程或者 channel 什么的，用某种朴素民科的眼光去设计一下，可能是某种异步请求和回调，其实我也不会，毕竟这只是一部科幻小说。
 
 ---
